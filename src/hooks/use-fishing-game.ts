@@ -18,6 +18,8 @@ export function useFishingGame() {
   const [history, setHistory] = useState<CatchResult[]>([]);
   const [mode, setMode] = useState<OutcomeMode>('mixed');
   const round = useRef(0);
+  const [missed, setMissed] = useState(false);
+  const resolved = useRef(false);
   const locked = !['idle', 'win', 'loss'].includes(state);
   const amount = Number(bet);
   const valid = Number.isFinite(amount) && amount >= 0.1 && amount <= 1000;
@@ -25,7 +27,7 @@ export function useFishingGame() {
   useEffect(() => {
     const next: Partial<Record<GameState, { delay: number; state: GameState }>> = {
       casting: { delay: 1100, state: 'waiting' },
-      waiting: { delay: 3600, state: 'bite' },
+      waiting: { delay: 8500, state: 'bite' },
     };
     const transition = next[state];
     if (!transition) return;
@@ -34,21 +36,42 @@ export function useFishingGame() {
   }, [state]);
 
   useEffect(() => {
+    if (state !== 'waiting') return;
+    const steps = [1.18, 1.36, 1.72, 2.15, 2.68];
+    let step = 0;
+    const interval = window.setInterval(() => {
+      setMultiplier(steps[step] ?? 2.68);
+      step += 1;
+    }, 1600);
+    return () => window.clearInterval(interval);
+  }, [state]);
+
+  useEffect(() => {
+    if (state !== 'bite') return;
+    const timer = window.setTimeout(() => { setMissed(true); setState('reeling'); }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [state]);
+
+  useEffect(() => {
     if (state !== 'reeling') return;
-    const target = getDemoMultiplier(round.current, mode);
-    const interval = window.setInterval(() => setMultiplier(value => Math.min(value + 0.17, target || 1.24)), 100);
+    const target = missed ? 0 : getDemoMultiplier(round.current, mode);
     const timer = window.setTimeout(() => {
+      if (resolved.current) return;
+      resolved.current = true;
+      const id = round.current;
       setMultiplier(target);
       setState(target > 0 ? 'win' : 'loss');
-      setHistory(items => [{ id: round.current, multiplier: target, bet: roundBet, time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }, ...items].slice(0, 8));
+      setHistory(items => [{ id, multiplier: target, bet: roundBet, time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }, ...items].slice(0, 8));
       round.current += 1;
-    }, 2100);
-    return () => { window.clearInterval(interval); window.clearTimeout(timer); };
-  }, [state, mode, roundBet]);
+    }, missed ? 550 : 1500);
+    return () => window.clearTimeout(timer);
+  }, [state, mode, roundBet, missed]);
 
   function action() {
     if (state === 'bite') { setState('reeling'); return; }
     if (locked || !valid) return;
+    resolved.current = false;
+    setMissed(false);
     setRoundBet(amount);
     setMultiplier(1);
     setState('casting');
