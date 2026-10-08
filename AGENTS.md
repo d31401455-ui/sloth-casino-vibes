@@ -8,3 +8,9 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Application architecture
+- Keep the fishing experience at the index route with a dedicated browser-only state hook; this isolates simulated gameplay from presentation and future integration.
+- Use generated lake and mascot assets as separate image layers; this preserves character identity while allowing independent scene animation.
+- Keep all theme colors and scene styling in the global semantic token system; this keeps casino controls and game states visually consistent.
+- Demo outcomes follow an explicit scripted sequence with preview modes; reeling is a reveal interaction and never a skill-based outcome.
