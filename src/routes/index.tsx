@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDownRight, ArrowLeft, Check, ChevronDown, Fish, FishingRod, History, Info, Maximize, Minus, Plus, Settings2, Volume2, VolumeX, Waves, X } from 'lucide-react';
+import { ArrowDownRight, ArrowLeft, Check, ChevronDown, Fish, FishingHook as FishingRod, History, Info, Maximize, Minus, Plus, Settings2, Volume2, VolumeX, Waves, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFishingGame, type OutcomeMode } from '@/hooks/use-fishing-game';
 import lake from '@/assets/fishing_lake.jpg';
@@ -30,7 +30,7 @@ function Index() {
   const audioRef = useRef<AudioContext | null>(null);
   const active = ['casting', 'waiting', 'bite', 'reeling'].includes(game.state);
   const result = game.state === 'win' || game.state === 'loss';
-  const actionText = { idle: 'CAST LINE', casting: 'CASTING…', waiting: 'WAITING FOR A BITE…', bite: 'REEL IT IN!', reeling: 'REELING IT IN…', win: 'CAST AGAIN', loss: 'TRY AGAIN' }[game.state];
+  const actionText = { idle: 'CAST LINE', casting: 'CASTING…', waiting: 'LAZY RIVER…', bite: 'REEL IT IN!', reeling: 'REELING IT IN…', win: 'CAST AGAIN', loss: 'TRY AGAIN' }[game.state];
   const statusText = { idle: 'Good things come to those who bait.', casting: 'A little splash. A little hope.', waiting: 'Easy does it. The fish are on their way.', bite: 'Something’s on the line!', reeling: 'Let’s see what’s down there…', win: 'Now that’s worth the wait.', loss: 'That one had other plans.' }[game.state];
 
   useEffect(() => {
@@ -100,7 +100,7 @@ function Index() {
             {game.state === 'win' && <div className="caught-fish"><Fish size={56} /><span>✦</span><span>✧</span></div>}
             {game.state === 'loss' && <div className="escaped-fish"><Fish size={42} /></div>}
             <div className={`multiplier-block ${result ? 'show-result' : ''}`} aria-live="polite">
-              <div className="multiplier-caption">{game.state === 'win' ? 'NICE CATCH!' : game.state === 'loss' ? 'THE FISH GOT AWAY!' : 'YOUR NEXT CATCH AWAITS'}</div>
+              <div className="multiplier-caption">{game.state === 'win' ? 'CAUGHT · NICE CATCH!' : game.state === 'loss' ? 'THE FISH GOT AWAY!' : game.state === 'waiting' ? 'LAZY RIVER · WAITING FOR A BITE' : 'YOUR NEXT CATCH AWAITS'}</div>
               <div className="multiplier">{game.multiplier.toFixed(2)}<span>×</span></div>
               <div className="scene-status">{game.state === 'win' ? `BET ${game.roundBet.toFixed(2)} → WIN ${(game.roundBet * game.multiplier).toFixed(2)}` : statusText}</div>
             </div>
@@ -119,7 +119,7 @@ function Index() {
         </section>
         <footer><span><span className="footer-h">H</span> A HOUSEBETS ORIGINAL</span><span>Made for the slow life.<span className="footer-separator">·</span>Demo experience<span className="footer-separator">·</span>18+</span></footer>
       </main>
-      <dialog ref={dialogRef} className="game-dialog" onCancel={() => setModal(null)} onClick={event => { if (event.target === event.currentTarget) setModal(null); }} aria-labelledby="dialog-title"><div className="dialog-content"><Button variant="ghost" size="icon" className="dialog-close" aria-label="Close dialog" onClick={() => setModal(null)}><X /></Button><div className="eyebrow">SLOTH’S FISHING HOLE</div><h2 id="dialog-title">{modal === 'info' ? 'A little about the lake.' : 'Make yourself comfortable.'}</h2>{modal === 'info' ? <><p>This is a free-play concept. Demo credits have no monetary value. No real bets or wallet transactions take place.</p><ol className="game-steps"><li><FishingRod />Cast your line with a demo amount.</li><li><Waves />Wait for the lake to send a bite.</li><li><Fish />Reel it in and reveal your catch.</li></ol><p>Reeling timing doesn’t determine the result. Outcomes follow a scripted demo sequence, not real casino odds.</p><Button className="dialog-primary" onClick={() => setModal(null)}>BACK TO THE LAKE</Button></> : <><div className="setting-row"><span>Game sound</span><Button variant="secondary" aria-pressed={sound} onClick={toggleSound}>{sound ? <Volume2 /> : <VolumeX />}{sound ? 'On' : 'Off'}</Button></div><div className="setting-row"><span>Ambient motion</span><Button variant="secondary" aria-pressed={motion} onClick={() => setMotion(!motion)}>{motion && <Check />}{motion ? 'On' : 'Off'}</Button></div><div className="outcome-setting"><label htmlFor="outcome-mode">Demo outcome</label><select id="outcome-mode" value={game.mode} disabled={game.locked} onChange={event => game.setMode(event.target.value as OutcomeMode)}><option value="mixed">Mixed catches</option><option value="win">Nice catch</option><option value="loss">Fish gets away</option></select></div><p>Settings apply only to this free-play session.</p></>}</div></dialog>
+      <dialog ref={dialogRef} className="game-dialog" onCancel={() => setModal(null)} onClick={event => { if (event.target === event.currentTarget) setModal(null); }} aria-labelledby="dialog-title"><div className="dialog-content"><Button variant="ghost" size="icon" className="dialog-close" aria-label="Close dialog" onClick={() => setModal(null)}><X /></Button><div className="eyebrow">SLOTH’S FISHING HOLE</div><h2 id="dialog-title">{modal === 'info' ? 'A little about the lake.' : 'Make yourself comfortable.'}</h2>{modal === 'info' ? <><p>This is a free-play concept. Demo credits have no monetary value. No real bets or wallet transactions take place.</p><ol className="game-steps"><li><FishingRod />Cast your line with a demo amount.</li><li><Waves />Drift through the Lazy River as your multiplier rises.</li><li><Fish />When a fish bites, reel within one second.</li></ol><p>Missing the reaction window lets the fish escape. Reeling in time reveals a scripted demo outcome, not real casino odds.</p><Button className="dialog-primary" onClick={() => setModal(null)}>BACK TO THE LAKE</Button></> : <><div className="setting-row"><span>Game sound</span><Button variant="secondary" aria-pressed={sound} onClick={toggleSound}>{sound ? <Volume2 /> : <VolumeX />}{sound ? 'On' : 'Off'}</Button></div><div className="setting-row"><span>Ambient motion</span><Button variant="secondary" aria-pressed={motion} onClick={() => setMotion(!motion)}>{motion && <Check />}{motion ? 'On' : 'Off'}</Button></div><div className="outcome-setting"><label htmlFor="outcome-mode">Demo outcome</label><select id="outcome-mode" value={game.mode} disabled={game.locked} onChange={event => game.setMode(event.target.value as OutcomeMode)}><option value="mixed">Mixed catches</option><option value="win">Nice catch</option><option value="loss">Fish gets away</option></select></div><p>Settings apply only to this free-play session.</p></>}</div></dialog>
     </div>
   );
 }
