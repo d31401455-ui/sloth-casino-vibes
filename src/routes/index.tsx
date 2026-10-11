@@ -53,14 +53,14 @@ function Index() {
     else dialogRef.current?.close();
   }, [modal]);
   useEffect(() => {
-    if (!sound || !['bite', 'win', 'loss'].includes(game.state)) return;
+    if (!sound || !['bite', 'cashed', 'snapped'].includes(game.state)) return;
     const audio = audioRef.current;
     if (!audio) return;
     const oscillator = audio.createOscillator();
     const gain = audio.createGain();
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(game.state === 'win' ? 660 : game.state === 'bite' ? 440 : 220, audio.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(game.state === 'loss' ? 110 : 880, audio.currentTime + 0.3);
+    oscillator.frequency.setValueAtTime(game.state === 'cashed' ? 660 : game.state === 'bite' ? 440 : 220, audio.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(game.state === 'snapped' ? 110 : 880, audio.currentTime + 0.3);
     gain.gain.setValueAtTime(0.08, audio.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.45);
     oscillator.connect(gain); gain.connect(audio.destination);
