@@ -399,3 +399,6 @@ footer>span:first-child { display:flex; align-items:center; gap:7px; font-size:8
 @keyframes aura { 0%,100% { filter:blur(1px) drop-shadow(0 0 6px var(--tier)); } 50% { filter:blur(1px) drop-shadow(0 0 16px var(--tier)); } }
 @media (max-width:640px) { .hooked-glow { top:350px; left:calc(50% + 90px); } .catch-card { top:140px; } .catch-basket { top:42px; right:12px; } .decision-row { grid-template-columns:1fr 1fr; } }
 .still .fish-shadow { animation-play-state:paused; }
+.catch-card { top:auto; bottom:150px; left:18%; }
+.fish-svg { fill:color-mix(in oklch,var(--overlay) 70%,var(--tier) 30%); }
+@media (max-width:640px) { .catch-card { left:50%; top:60px; bottom:auto; padding:8px 16px; } .catch-card strong { font-size:15px; } .catch-mult { font-size:19px; } .catch-basket { top:auto; bottom:48px; } }
