@@ -28,10 +28,13 @@ function Index() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const stageRef = useRef<HTMLElement>(null);
   const audioRef = useRef<AudioContext | null>(null);
-  const active = ['casting', 'waiting', 'bite', 'reeling'].includes(game.state);
-  const result = game.state === 'win' || game.state === 'loss';
-  const actionText = { idle: 'CAST LINE', casting: 'CASTING…', waiting: 'LAZY RIVER…', bite: 'REEL IT IN!', reeling: 'REELING IT IN…', win: 'CAST AGAIN', loss: 'TRY AGAIN' }[game.state];
-  const statusText = { idle: 'Good things come to those who bait.', casting: 'A little splash. A little hope.', waiting: 'Easy does it. The fish are on their way.', bite: 'Something’s on the line!', reeling: 'Let’s see what’s down there…', win: 'Now that’s worth the wait.', loss: 'That one had other plans.' }[game.state];
+  const active = ['casting', 'waiting', 'bite', 'hooked'].includes(game.state);
+  const result = game.state === 'cashed' || game.state === 'snapped';
+  const win = game.roundBet * game.multiplier;
+  const last = game.catches[game.catches.length - 1];
+  const actionText = { idle: 'CAST LINE', casting: 'CASTING…', waiting: 'WAITING FOR A BITE…', bite: 'FISH ON!', hooked: 'KEEP FISHING', snapped: 'CAST AGAIN', cashed: 'CAST AGAIN' }[game.state];
+  const statusText = { idle: 'Good things come to those who bait.', casting: 'A little splash. A little hope.', waiting: 'Easy does it. Something is circling…', bite: 'Something’s on the line!', hooked: last ? `${last.name} hooked · ×${last.multiplier.toFixed(2)}` : '', snapped: 'Line snapped! The catch got away.', cashed: `Cashed out ${win.toFixed(2)}` }[game.state];
+  const caption = { idle: 'YOUR NEXT CATCH AWAITS', casting: 'LINE IN THE WATER', waiting: 'DARK WATERS · WAITING', bite: 'BITE!', hooked: 'CASH OUT OR KEEP FISHING?', snapped: 'LINE SNAPPED!', cashed: 'CASHED OUT · NICE HAUL!' }[game.state];
 
   useEffect(() => {
     if (modal) dialogRef.current?.showModal();
