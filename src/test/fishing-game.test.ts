@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { getDemoMultiplier } from '@/hooks/use-fishing-game';
+import { getDemoCatch, totalMultiplier, FISH } from '@/hooks/use-fishing-game';
 
-describe('Fishing demo outcomes', () => {
-  it('cycles through both catches and escaped fish', () => {
-    expect(getDemoMultiplier(0, 'mixed')).toBe(3.42);
-    expect(getDemoMultiplier(1, 'mixed')).toBe(0);
-    expect(getDemoMultiplier(6, 'mixed')).toBe(3.42);
+describe('Fishing demo catches', () => {
+  it('follows the scripted round and snaps after the list', () => {
+    expect(getDemoCatch(0, 0, 'mixed')?.id).toBe('trout');
+    expect(getDemoCatch(0, 3, 'mixed')).toBeNull();
+    expect(getDemoCatch(1, 0, 'mixed')).toBeNull();
   });
-  it('supports explicit win and loss previews', () => {
-    expect(getDemoMultiplier(1, 'win')).toBe(3.42);
-    expect(getDemoMultiplier(0, 'loss')).toBe(0);
+  it('supports win and loss previews', () => {
+    expect(getDemoCatch(0, 10, 'win')).not.toBeNull();
+    expect(getDemoCatch(0, 0, 'loss')).toBeNull();
+  });
+  it('multiplies catches together', () => {
+    expect(totalMultiplier([FISH.trout, FISH.perch])).toBe(3.05);
+    expect(totalMultiplier([])).toBe(1);
   });
 });

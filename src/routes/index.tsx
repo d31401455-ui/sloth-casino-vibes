@@ -2,14 +2,26 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDownRight, ArrowLeft, Check, ChevronDown, Fish, FishingHook as FishingRod, History, Info, Maximize, Minus, Plus, Settings2, Volume2, VolumeX, Waves, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useFishingGame, type OutcomeMode } from '@/hooks/use-fishing-game';
+import { FISH, useFishingGame, type OutcomeMode } from '@/hooks/use-fishing-game';
+
+const SHADOWS = [
+  { id: 1, fish: 'trout', top: '74%', speed: '26s', delay: '-4s', size: 0.8, reverse: false },
+  { id: 2, fish: 'perch', top: '82%', speed: '34s', delay: '-18s', size: 1, reverse: true },
+  { id: 3, fish: 'minnow', top: '68%', speed: '22s', delay: '-11s', size: 0.65, reverse: true },
+  { id: 4, fish: 'pike', top: '88%', speed: '41s', delay: '-27s', size: 1.25, reverse: false },
+  { id: 5, fish: 'leviathan', top: '93%', speed: '58s', delay: '-9s', size: 1.7, reverse: true },
+];
+
+function FishShape({ flip = false }: { flip?: boolean }) {
+  return <svg viewBox="0 0 80 32" className="fish-svg" style={flip ? { transform: 'scaleX(-1)' } : undefined}><path d="M4 16 C18 2 46 2 62 14 L76 4 L72 16 L76 28 L62 18 C46 30 18 30 4 16Z" /><circle cx="16" cy="14" r="2" className="fish-eye" /></svg>;
+}
 import lake from '@/assets/fishing_lake.jpg';
 import sloth from '@/assets/sloth_boat.png';
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
     { title: "Sloth’s Fishing Hole | Housebets Originals" },
-    { name: 'description', content: 'A little patience. A nice catch. Explore the Housebets sloth fishing game in a free-play interactive demo.' },
+    { name: 'description', content: 'A little patience. A nice catch. Hook fish multipliers, then cash out or keep fishing in the Housebets sloth demo.' },
     { property: 'og:title', content: 'Sloth’s Fishing Hole | Housebets Originals' },
     { property: 'og:description', content: 'Cast your line and unwind with the Housebets sloth. A free-play fishing game demo.' },
     { property: 'og:type', content: 'website' },
@@ -28,24 +40,27 @@ function Index() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const stageRef = useRef<HTMLElement>(null);
   const audioRef = useRef<AudioContext | null>(null);
-  const active = ['casting', 'waiting', 'bite', 'reeling'].includes(game.state);
-  const result = game.state === 'win' || game.state === 'loss';
-  const actionText = { idle: 'CAST LINE', casting: 'CASTING…', waiting: 'LAZY RIVER…', bite: 'REEL IT IN!', reeling: 'REELING IT IN…', win: 'CAST AGAIN', loss: 'TRY AGAIN' }[game.state];
-  const statusText = { idle: 'Good things come to those who bait.', casting: 'A little splash. A little hope.', waiting: 'Easy does it. The fish are on their way.', bite: 'Something’s on the line!', reeling: 'Let’s see what’s down there…', win: 'Now that’s worth the wait.', loss: 'That one had other plans.' }[game.state];
+  const active = ['casting', 'waiting', 'bite', 'hooked'].includes(game.state);
+  const result = game.state === 'cashed' || game.state === 'snapped';
+  const win = game.roundBet * game.multiplier;
+  const last = game.catches[game.catches.length - 1];
+  const actionText = { idle: 'CAST LINE', casting: 'CASTING…', waiting: 'WAITING FOR A BITE…', bite: 'FISH ON!', hooked: 'KEEP FISHING', snapped: 'CAST AGAIN', cashed: 'CAST AGAIN' }[game.state];
+  const statusText = { idle: 'Good things come to those who bait.', casting: 'A little splash. A little hope.', waiting: 'Easy does it. Something is circling…', bite: 'Something’s on the line!', hooked: last ? `${last.name} hooked · ×${last.multiplier.toFixed(2)}` : '', snapped: 'Line snapped! The catch got away.', cashed: `Cashed out ${win.toFixed(2)}` }[game.state];
+  const caption = { idle: 'YOUR NEXT CATCH AWAITS', casting: 'LINE IN THE WATER', waiting: 'DARK WATERS · WAITING', bite: 'BITE!', hooked: 'CASH OUT OR KEEP FISHING?', snapped: 'LINE SNAPPED!', cashed: 'CASHED OUT · NICE HAUL!' }[game.state];
 
   useEffect(() => {
     if (modal) dialogRef.current?.showModal();
     else dialogRef.current?.close();
   }, [modal]);
   useEffect(() => {
-    if (!sound || !['bite', 'win', 'loss'].includes(game.state)) return;
+    if (!sound || !['bite', 'cashed', 'snapped'].includes(game.state)) return;
     const audio = audioRef.current;
     if (!audio) return;
     const oscillator = audio.createOscillator();
     const gain = audio.createGain();
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(game.state === 'win' ? 660 : game.state === 'bite' ? 440 : 220, audio.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(game.state === 'loss' ? 110 : 880, audio.currentTime + 0.3);
+    oscillator.frequency.setValueAtTime(game.state === 'cashed' ? 660 : game.state === 'bite' ? 440 : 220, audio.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(game.state === 'snapped' ? 110 : 880, audio.currentTime + 0.3);
     gain.gain.setValueAtTime(0.08, audio.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.45);
     oscillator.connect(gain); gain.connect(audio.destination);
@@ -90,36 +105,40 @@ function Index() {
           <div className={`lake-scene state-${game.state}`}>
             <img src={lake} className="lake-background" alt="A peaceful turquoise fishing lake surrounded by pine forests at sunset" width={1536} height={1024} />
             <div className="scene-shade" />
-            <div className="scene-top"><span className="spot-name"><span /> SLOTH’S SPOT <span className="spot-divider">/</span> <span className="spot-weather">Dusk, 22°</span></span><span className="scene-demo">FREE PLAY</span></div>
-            <div className="scene-copy"><div className="scene-kicker">A LITTLE PATIENCE. A LITTLE LUCK.</div><h2>The good life<br />is on the line.</h2></div>
+            <div className="scene-top"><span className="spot-name"><span /> SLOTH’S SPOT <span className="spot-divider">/</span> <span className="spot-weather">Dusk, 22°</span></span></div>
             <div className="water-shimmer" />
+            <div className="fish-shadows" aria-hidden="true">
+              {SHADOWS.map(s => <div key={s.id} className={`fish-shadow tier-${FISH[s.fish].tier}`} style={{ top: s.top, animationDuration: s.speed, animationDelay: s.delay, animationDirection: s.reverse ? 'reverse' : 'normal', ['--fish-scale' as string]: s.size }}><FishShape flip={s.reverse} /><span className="fish-tag">{FISH[s.fish].multiplier.toFixed(2)}×</span></div>)}
+            </div>
             <div className="boat-ripple ripple-one" /><div className="boat-ripple ripple-two" />
             <div className="sloth-wrap"><img src={sloth} alt="Housebets sloth in his top hat, fishing from a wooden boat" width={1024} height={1024} className="sloth-character" /></div>
             <div className="float-ripple" /><div className="fishing-float" />
-            {(game.state === 'bite' || game.state === 'reeling') && <div className="bite-badge"><Fish size={24} /> {game.state === 'bite' ? 'BITE!' : 'HOLD ON…'}</div>}
-            {game.state === 'win' && <div className="caught-fish"><Fish size={56} /><span>✦</span><span>✧</span></div>}
-            {game.state === 'loss' && <div className="escaped-fish"><Fish size={42} /></div>}
+            {game.state === 'bite' && game.pending && <><div className={`hooked-glow tier-${game.pending.tier}`}><FishShape /></div><div className={`bite-badge tier-${game.pending.tier}`}><Fish size={24} /> BITE!</div></>}
+            {game.state === 'hooked' && last && <div className={`catch-card tier-${last.tier}`}><span className="catch-tier">{last.tier.toUpperCase()}</span><strong>{last.name}</strong><span className="catch-mult">×{last.multiplier.toFixed(2)}</span></div>}
+            {game.state === 'cashed' && <div className="caught-fish"><Fish size={56} /><span>✦</span><span>✧</span></div>}
+            {game.state === 'snapped' && <div className="escaped-fish"><Fish size={42} /></div>}
+            {game.catches.length > 0 && <div className="catch-basket" aria-label="Catch basket">{game.catches.map((f, i) => <span key={i} className={`basket-fish tier-${f.tier}`}><Fish size={12} />{f.multiplier.toFixed(2)}×</span>)}</div>}
             <div className={`multiplier-block ${result ? 'show-result' : ''}`} aria-live="polite">
-              <div className="multiplier-caption">{game.state === 'win' ? 'CAUGHT · NICE CATCH!' : game.state === 'loss' ? 'THE FISH GOT AWAY!' : game.state === 'waiting' ? 'LAZY RIVER · WAITING FOR A BITE' : 'YOUR NEXT CATCH AWAITS'}</div>
+              <div className="multiplier-caption">{caption}</div>
               <div className="multiplier">{game.multiplier.toFixed(2)}<span>×</span></div>
-              <div className="scene-status">{game.state === 'win' ? `BET ${game.roundBet.toFixed(2)} → WIN ${(game.roundBet * game.multiplier).toFixed(2)}` : statusText}</div>
+              <div className="scene-status">{game.state === 'hooked' ? `${statusText} · WORTH ${win.toFixed(2)}` : statusText}</div>
             </div>
-            <div className="scene-bottom"><span><Waves size={14} /> A good place to do absolutely nothing.</span><div className="scene-tools"><Button variant="ghost" size="icon" title={sound ? 'Mute sound' : 'Enable sound'} aria-label={sound ? 'Mute sound' : 'Enable sound'} onClick={toggleSound}>{sound ? <Volume2 /> : <VolumeX />}</Button><Button variant="ghost" size="icon" title="Game settings" aria-label="Game settings" onClick={() => setModal('settings')}><Settings2 /></Button><Button variant="ghost" size="icon" title={expanded ? 'Exit full screen' : 'Full screen'} aria-label={expanded ? 'Exit full screen' : 'Full screen'} onClick={() => void toggleFullscreen()}><Maximize /></Button></div></div>
+            <div className="scene-bottom"><span /><div className="scene-tools"><Button variant="ghost" size="icon" title={sound ? 'Mute sound' : 'Enable sound'} aria-label={sound ? 'Mute sound' : 'Enable sound'} onClick={toggleSound}>{sound ? <Volume2 /> : <VolumeX />}</Button><Button variant="ghost" size="icon" title="Game settings" aria-label="Game settings" onClick={() => setModal('settings')}><Settings2 /></Button><Button variant="ghost" size="icon" title={expanded ? 'Exit full screen' : 'Full screen'} aria-label={expanded ? 'Exit full screen' : 'Full screen'} onClick={() => void toggleFullscreen()}><Maximize /></Button></div></div>
           </div>
 
           <div className="control-panel">
             <div className="bet-controls"><label htmlFor="bet-amount">BET AMOUNT <span>DEMO CREDITS</span></label><div className="bet-row"><div className="amount-field"><span className="coin-symbol">$</span><input id="bet-amount" aria-label="Bet amount" type="number" min="0.10" max="1000" step="0.10" value={game.bet} disabled={game.locked} onChange={event => game.setBet(event.target.value)} /><div className="amount-steppers"><Button variant="ghost" size="icon" aria-label="Decrease bet" title="Decrease bet" disabled={game.locked} onClick={() => game.adjust(Number(game.bet) - 1)}><Minus /></Button><Button variant="ghost" size="icon" aria-label="Increase bet" title="Increase bet" disabled={game.locked} onClick={() => game.adjust(Number(game.bet) + 1)}><Plus /></Button></div></div><div className="bet-shortcuts"><Button variant="secondary" disabled={game.locked} onClick={() => game.adjust(Number(game.bet) / 2)}>½</Button><Button variant="secondary" disabled={game.locked} onClick={() => game.adjust(Number(game.bet) * 2)}>2×</Button><Button variant="secondary" disabled={game.locked} onClick={() => game.adjust(1000)}>MAX</Button></div></div>{!game.valid && <span className="input-error">Enter 0.10–1,000 demo credits.</span>}</div>
-            <div className="cast-control"><Button className={`cast-button ${game.state === 'bite' ? 'bite-button' : ''}`} disabled={(active && game.state !== 'bite') || !game.valid} onClick={game.action}>{game.state === 'waiting' ? <span className="waiting-dots"><i /><i /><i /></span> : <FishingRod size={22} />}{actionText}</Button><span>{game.state === 'bite' ? 'Your catch is ready. Let’s take a look.' : 'Sit back. The lake sets the pace.'}</span></div>
+            <div className="cast-control">{game.state === 'hooked' ? <div className="decision-row"><Button className="cast-button cashout-button" onClick={game.cashOut}>CASH OUT {win.toFixed(2)}</Button><Button variant="secondary" className="keep-button" onClick={game.cast}><FishingRod size={18} />KEEP FISHING</Button></div> : <Button className={`cast-button ${game.state === 'bite' ? 'bite-button' : ''}`} disabled={active || !game.valid} onClick={game.cast}>{game.state === 'waiting' ? <span className="waiting-dots"><i /><i /><i /></span> : <FishingRod size={22} />}{actionText}</Button>}<span>{game.state === 'hooked' ? 'Bank it now, or risk it for a bigger fish.' : 'Each new cast can snap the line.'}</span></div>
             <div className="panel-info"><span className="live-state"><span className={active ? 'active-dot' : ''} />{game.state === 'idle' ? 'READY TO CAST' : game.state.toUpperCase()}</span><Button variant="ghost" className="info-button" onClick={() => setModal('info')}><Info size={14} /> Game info</Button></div>
           </div>
         </section>
 
         <section className="history-section" aria-label="Catch history"><div className="history-header"><div className="history-tabs"><Button variant="ghost" className={tab === 'recent' ? 'selected' : ''} onClick={() => setTab('recent')}><History size={15} /> Recent catches {game.history.length > 0 && <span className="count-badge">{game.history.length}</span>}</Button><Button variant="ghost" className={tab === 'catches' ? 'selected' : ''} onClick={() => setTab('catches')}><Fish size={15} /> My catches</Button></div><span className="session-label">THIS SESSION <ChevronDown size={12} /></span></div>
-          {rows.length === 0 ? <div className="empty-history"><span className="empty-icon"><Fish size={24} /></span><div><strong>{tab === 'catches' ? 'Your trophy shelf is waiting.' : 'Every good story starts with a cast.'}</strong><p>{tab === 'catches' ? 'Successful catches will appear here.' : 'Your recent catches will appear here.'}</p></div><span className="empty-line" /><FishingRod className="empty-rod" size={25} /></div> : <div className="history-table"><div className="table-row table-head"><span>CATCH</span><span>BET</span><span>MULTIPLIER</span><span>RETURN</span></div>{rows.map(item => <div className="table-row" key={item.id}><span className="catch-name"><Fish size={15} /><strong>{item.multiplier > 0 ? 'Nice catch' : 'Got away'}</strong><small>{item.time}</small></span><span>{item.bet.toFixed(2)}</span><span className={item.multiplier > 0 ? 'positive' : 'muted-result'}>{item.multiplier.toFixed(2)}×</span><span>{(item.bet * item.multiplier).toFixed(2)} <ArrowDownRight size={12} /></span></div>)}</div>}
+          {rows.length === 0 ? <div className="empty-history"><span className="empty-icon"><Fish size={24} /></span><div><strong>{tab === 'catches' ? 'Your trophy shelf is waiting.' : 'Every good story starts with a cast.'}</strong><p>{tab === 'catches' ? 'Successful catches will appear here.' : 'Your recent catches will appear here.'}</p></div><span className="empty-line" /><FishingRod className="empty-rod" size={25} /></div> : <div className="history-table"><div className="table-row table-head"><span>CATCH</span><span>BET</span><span>MULTIPLIER</span><span>RETURN</span></div>{rows.map(item => <div className="table-row" key={item.id}><span className="catch-name"><Fish size={15} /><strong>{item.multiplier > 0 ? `${item.catches.length} fish · cashed` : 'Line snapped'}</strong><small>{item.time}</small></span><span>{item.bet.toFixed(2)}</span><span className={item.multiplier > 0 ? 'positive' : 'muted-result'}>{item.multiplier.toFixed(2)}×</span><span>{(item.bet * item.multiplier).toFixed(2)} <ArrowDownRight size={12} /></span></div>)}</div>}
         </section>
         <footer><span><span className="footer-h">H</span> A HOUSEBETS ORIGINAL</span><span>Made for the slow life.<span className="footer-separator">·</span>Demo experience<span className="footer-separator">·</span>18+</span></footer>
       </main>
-      <dialog ref={dialogRef} className="game-dialog" onCancel={() => setModal(null)} onClick={event => { if (event.target === event.currentTarget) setModal(null); }} aria-labelledby="dialog-title"><div className="dialog-content"><Button variant="ghost" size="icon" className="dialog-close" aria-label="Close dialog" onClick={() => setModal(null)}><X /></Button><div className="eyebrow">SLOTH’S FISHING HOLE</div><h2 id="dialog-title">{modal === 'info' ? 'A little about the lake.' : 'Make yourself comfortable.'}</h2>{modal === 'info' ? <><p>This is a free-play concept. Demo credits have no monetary value. No real bets or wallet transactions take place.</p><ol className="game-steps"><li><FishingRod />Cast your line with a demo amount.</li><li><Waves />Drift through the Lazy River as your multiplier rises.</li><li><Fish />When a fish bites, reel within one second.</li></ol><p>Missing the reaction window lets the fish escape. Reeling in time reveals a scripted demo outcome, not real casino odds.</p><Button className="dialog-primary" onClick={() => setModal(null)}>BACK TO THE LAKE</Button></> : <><div className="setting-row"><span>Game sound</span><Button variant="secondary" aria-pressed={sound} onClick={toggleSound}>{sound ? <Volume2 /> : <VolumeX />}{sound ? 'On' : 'Off'}</Button></div><div className="setting-row"><span>Ambient motion</span><Button variant="secondary" aria-pressed={motion} onClick={() => setMotion(!motion)}>{motion && <Check />}{motion ? 'On' : 'Off'}</Button></div><div className="outcome-setting"><label htmlFor="outcome-mode">Demo outcome</label><select id="outcome-mode" value={game.mode} disabled={game.locked} onChange={event => game.setMode(event.target.value as OutcomeMode)}><option value="mixed">Mixed catches</option><option value="win">Nice catch</option><option value="loss">Fish gets away</option></select></div><p>Settings apply only to this free-play session.</p></>}</div></dialog>
+      <dialog ref={dialogRef} className="game-dialog" onCancel={() => setModal(null)} onClick={event => { if (event.target === event.currentTarget) setModal(null); }} aria-labelledby="dialog-title"><div className="dialog-content"><Button variant="ghost" size="icon" className="dialog-close" aria-label="Close dialog" onClick={() => setModal(null)}><X /></Button><div className="eyebrow">SLOTH’S FISHING HOLE</div><h2 id="dialog-title">{modal === 'info' ? 'A little about the lake.' : 'Make yourself comfortable.'}</h2>{modal === 'info' ? <><p>This is a free-play concept. Demo credits have no monetary value. No real bets or wallet transactions take place.</p><ol className="game-steps"><li><FishingRod />Cast your line with a demo amount.</li><li><Fish />Every fish you hook multiplies your catch.</li><li><Waves />Cash out any time, or keep fishing for rarer fish.</li></ol><p>Each new cast risks snapping the line and losing the round. Outcomes follow a scripted demo sequence, not real casino odds. Common, Rare, Epic and Legendary fish carry bigger multipliers.</p><Button className="dialog-primary" onClick={() => setModal(null)}>BACK TO THE LAKE</Button></> : <><div className="setting-row"><span>Game sound</span><Button variant="secondary" aria-pressed={sound} onClick={toggleSound}>{sound ? <Volume2 /> : <VolumeX />}{sound ? 'On' : 'Off'}</Button></div><div className="setting-row"><span>Ambient motion</span><Button variant="secondary" aria-pressed={motion} onClick={() => setMotion(!motion)}>{motion && <Check />}{motion ? 'On' : 'Off'}</Button></div><div className="outcome-setting"><label htmlFor="outcome-mode">Demo outcome</label><select id="outcome-mode" value={game.mode} disabled={game.locked} onChange={event => game.setMode(event.target.value as OutcomeMode)}><option value="mixed">Mixed catches</option><option value="win">Never snaps</option><option value="loss">Snaps first cast</option></select></div><p>Settings apply only to this free-play session.</p></>}</div></dialog>
     </div>
   );
 }
