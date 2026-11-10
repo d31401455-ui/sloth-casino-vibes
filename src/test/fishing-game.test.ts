@@ -12,7 +12,7 @@ describe('Fishing demo catches', () => {
     expect(getDemoCatch(0, 0, 'loss')).toBeNull();
   });
   it('multiplies catches together', () => {
-    expect(totalMultiplier([FISH.trout, FISH.perch])).toBe(3.05);
+    expect(totalMultiplier([FISH['trout'], FISH['perch']])).toBe(3.05);
     expect(totalMultiplier([])).toBe(1);
   });
 });

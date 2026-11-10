@@ -6,30 +6,31 @@ export type Tier = 'common' | 'rare' | 'epic' | 'legendary';
 export type FishType = { id: string; name: string; tier: Tier; multiplier: number };
 export type RoundResult = { id: number; multiplier: number; bet: number; time: string; catches: string[] };
 
-export const FISH: Record<string, FishType> = {
+export const FISH = {
   minnow: { id: 'minnow', name: 'Lazy Minnow', tier: 'common', multiplier: 1.25 },
   trout: { id: 'trout', name: 'River Trout', tier: 'common', multiplier: 1.45 },
   perch: { id: 'perch', name: 'Moon Perch', tier: 'rare', multiplier: 2.1 },
   walleye: { id: 'walleye', name: 'Night Walleye', tier: 'rare', multiplier: 3.2 },
   pike: { id: 'pike', name: 'Golden Pike', tier: 'epic', multiplier: 5.6 },
   leviathan: { id: 'leviathan', name: 'Deep Leviathan', tier: 'legendary', multiplier: 18 },
-};
+} satisfies Record<string, FishType>;
+export type FishId = keyof typeof FISH;
 
 /** Scripted demo rounds: the listed fish bite in order, the next cast after the list snaps the line. */
-export const DEMO_ROUNDS: string[][] = [
+export const DEMO_ROUNDS: FishId[][] = [
   ['trout', 'perch', 'walleye'],
   [],
   ['minnow', 'pike', 'trout'],
   ['perch', 'leviathan'],
   ['trout'],
 ];
-const WIN_CYCLE = ['trout', 'perch', 'minnow', 'pike', 'walleye', 'leviathan'];
+const WIN_CYCLE: FishId[] = ['trout', 'perch', 'minnow', 'pike', 'walleye', 'leviathan'];
 
 /** Returns the fish for the given cast, or null when the line snaps. */
 export function getDemoCatch(round: number, cast: number, mode: OutcomeMode): FishType | null {
   if (mode === 'loss') return null;
-  if (mode === 'win') return FISH[WIN_CYCLE[cast % WIN_CYCLE.length]];
-  const script = DEMO_ROUNDS[round % DEMO_ROUNDS.length];
+  if (mode === 'win') return FISH[WIN_CYCLE[cast % WIN_CYCLE.length] ?? 'trout'];
+  const script = DEMO_ROUNDS[round % DEMO_ROUNDS.length] ?? [];
   const id = script[cast];
   return id ? FISH[id] : null;
 }
@@ -79,6 +80,7 @@ export function useFishingGame() {
       }, 1300);
       return () => window.clearTimeout(t);
     }
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 

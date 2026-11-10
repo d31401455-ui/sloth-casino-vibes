@@ -2,14 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, Fish, FishingHook as FishingRod, Info, Maximize, Minus, Plus, Settings2, Volume2, VolumeX, Waves, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FISH, useFishingGame, type OutcomeMode } from '@/hooks/use-fishing-game';
+import { FISH, useFishingGame, type OutcomeMode, type FishId } from '@/hooks/use-fishing-game';
 
 const SHADOWS = [
-  { id: 1, fish: 'trout', top: '74%', speed: '26s', delay: '-4s', size: 0.8, reverse: false },
-  { id: 2, fish: 'perch', top: '82%', speed: '34s', delay: '-18s', size: 1, reverse: true },
-  { id: 3, fish: 'minnow', top: '68%', speed: '22s', delay: '-11s', size: 0.65, reverse: true },
-  { id: 4, fish: 'pike', top: '88%', speed: '41s', delay: '-27s', size: 1.25, reverse: false },
-  { id: 5, fish: 'leviathan', top: '93%', speed: '58s', delay: '-9s', size: 1.7, reverse: true },
+  { id: 1, fish: 'trout' as FishId, top: '74%', speed: '26s', delay: '-4s', size: 0.8, reverse: false },
+  { id: 2, fish: 'perch' as FishId, top: '82%', speed: '34s', delay: '-18s', size: 1, reverse: true },
+  { id: 3, fish: 'minnow' as FishId, top: '68%', speed: '22s', delay: '-11s', size: 0.65, reverse: true },
+  { id: 4, fish: 'pike' as FishId, top: '88%', speed: '41s', delay: '-27s', size: 1.25, reverse: false },
+  { id: 5, fish: 'leviathan' as FishId, top: '93%', speed: '58s', delay: '-9s', size: 1.7, reverse: true },
 ];
 
 function FishShape({ flip = false }: { flip?: boolean }) {
