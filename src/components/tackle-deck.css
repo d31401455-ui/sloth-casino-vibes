@@ -1,0 +1,98 @@
+/* =============================================================================
+   Tackle Deck — "Nautical Casino Cockpit" bottom bar
+   Housebets Originals · Sloth's Fishing Hole
+   Self-contained: no UI library, no component framework, no icon package
+   dependency beyond the SVGs the markup passes in.
+   Reads the design tokens listed in README.md (see tokens.css).
+   ========================================================================== */
+
+/* --- Scoped resets ----------------------------------------------------------- */
+.tackle-deck button { font: inherit; -webkit-tap-highlight-color: transparent; }
+.tackle-deck svg { flex-shrink: 0; }
+
+/* --- Bet field --------------------------------------------------------------- */
+.bet-row { display:flex; gap:7px; }
+.amount-field { display:flex; height:46px; align-items:center; background:var(--background); border:1px solid var(--border); border-radius:5px; padding:0 10px; flex:1; min-width:0; }
+.coin-symbol { color:var(--primary); font-size:11px; font-weight:600; border:1px solid color-mix(in oklch,var(--primary) 30%,transparent); border-radius:50%; width:18px; height:18px; text-align:center; line-height:16px; flex-shrink:0; }
+.amount-field input { color:var(--foreground); background:transparent; width:100%; min-width:0; border:0; outline:0; padding:0 10px; font-weight:600; font-size:14px; font-variant-numeric:tabular-nums; }
+.amount-field:focus-within { border-color:var(--primary); }
+.amount-field input::-webkit-inner-spin-button { display:none; }
+.amount-field input { -moz-appearance:textfield; }
+
+/* --- Steppers (− / +) -------------------------------------------------------- */
+.amount-steppers { display:flex; gap:1px; }
+.amount-steppers button { width:22px; height:28px; display:inline-flex; align-items:center; justify-content:center; background:transparent; border:0; border-radius:6px; color:var(--muted-foreground); cursor:pointer; }
+.amount-steppers svg { width:12px; }
+.amount-steppers button:hover:not(:disabled) { background:var(--accent); color:var(--accent-foreground); }
+.amount-steppers button:disabled { cursor:not-allowed; opacity:.5; }
+
+/* --- Shortcuts (½ / 2× / MAX) ------------------------------------------------ */
+.bet-shortcuts { display:flex; gap:4px; }
+.bet-shortcuts button { height:46px; padding:0 11px; min-width:36px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:var(--foreground); border:1px solid var(--border); border-radius:6px; background:var(--muted); cursor:pointer; }
+.bet-shortcuts button:hover:not(:disabled) { background:var(--accent); }
+.bet-shortcuts button:disabled { cursor:not-allowed; opacity:.5; }
+
+/* --- Waiting dots (shown while the line is in the water) --------------------- */
+.waiting-dots { display:flex; gap:3px; }
+.waiting-dots i { height:4px; width:4px; border-radius:50%; background:var(--primary-foreground); animation:dot 1s infinite; }
+.waiting-dots i:nth-child(2) { animation-delay:.2s; }
+.waiting-dots i:nth-child(3) { animation-delay:.4s; }
+@keyframes dot { 0%,100% { opacity:.3; } 50% { opacity:1; } }
+
+/* --- Validation hint --------------------------------------------------------- */
+.input-error { color:var(--gold); display:block; font-size:10px; margin-top:4px; }
+
+/* --- Decision row (cash out vs. keep fishing) -------------------------------- */
+.decision-row { display:grid; grid-template-columns:1.3fr 1fr; gap:10px; width:100%; }
+
+/* ===== Tackle Deck (Nautical Casino Cockpit) ===== */
+.tackle-deck { position:relative; display:grid; grid-template-columns:auto 1.25fr 1fr auto; gap:22px; align-items:end; padding:22px 26px 20px; background:linear-gradient(180deg, color-mix(in oklch, var(--water, var(--primary)) 22%, var(--card)) 0%, var(--card) 38%, color-mix(in oklch, var(--background) 70%, var(--card)) 100%); border-top:1px solid color-mix(in oklch, var(--gold) 45%, transparent); box-shadow:inset 0 1px 0 color-mix(in oklch, var(--gold) 25%, transparent), inset 0 -10px 30px color-mix(in oklch, var(--background) 70%, transparent); }
+.deck-rim { position:absolute; inset:-14px 0 auto; height:14px; pointer-events:none; background:linear-gradient(90deg, transparent, color-mix(in oklch, var(--primary) 35%, transparent) 30%, color-mix(in oklch, var(--gold) 45%, transparent) 50%, color-mix(in oklch, var(--primary) 35%, transparent) 70%, transparent); filter:blur(8px); opacity:.55; animation:deck-glimmer 6s ease-in-out infinite; }
+@keyframes deck-glimmer { 0%,100% { opacity:.3; transform:translateX(-4%); } 50% { opacity:.7; transform:translateX(4%); } }
+.hud-label { display:flex; gap:6px; align-items:center; font-size:10px; font-weight:700; letter-spacing:1.2px; color:var(--muted-foreground); margin-bottom:7px; }
+.hud-label em { font-style:normal; font-size:8px; padding:1px 5px; border-radius:3px; background:color-mix(in oklch, var(--primary) 18%, transparent); color:var(--primary); }
+.deck-hud { display:flex; gap:10px; }
+.hud-meter { min-width:150px; padding:9px 14px 10px; border-radius:10px; background:color-mix(in oklch, var(--background) 85%, transparent); border:1px solid color-mix(in oklch, var(--gold) 22%, var(--border)); box-shadow:inset 0 2px 8px color-mix(in oklch, var(--background) 80%, transparent); }
+.hud-meter .hud-label { margin-bottom:3px; }
+.hud-value { display:block; font-family:Outfit, sans-serif; font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--foreground); white-space:nowrap; }
+.hud-win .hud-value { color:var(--gold); }
+.hud-win.has-win { animation:win-flash 1.2s ease-out; }
+@keyframes win-flash { 0% { box-shadow:0 0 0 0 color-mix(in oklch, var(--gold) 70%, transparent); border-color:var(--gold); } 100% { box-shadow:0 0 0 14px transparent; } }
+.deck-bet .amount-field { height:50px; border-radius:10px; border-color:color-mix(in oklch, var(--gold) 22%, var(--border)); background:color-mix(in oklch, var(--background) 85%, transparent); }
+.deck-bet .coin-symbol { color:var(--gold); font-weight:800; }
+.deck-bet .bet-shortcuts button { height:50px; min-width:46px; border-radius:10px; font-weight:800; border:1px solid color-mix(in oklch, var(--gold) 22%, var(--border)); background:linear-gradient(180deg, color-mix(in oklch, var(--foreground) 8%, var(--card)), var(--card)); box-shadow:0 3px 0 color-mix(in oklch, var(--background) 80%, transparent); }
+.deck-bet .bet-shortcuts button:active:not(:disabled) { transform:translateY(2px); box-shadow:none; }
+.deck-action { min-width:260px; }
+.deck-btn { position:relative; overflow:hidden; width:100%; height:62px; border-radius:14px; border:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:Outfit, sans-serif; font-weight:800; letter-spacing:1.4px; transition:transform .12s, filter .15s, box-shadow .12s; }
+.deck-btn .btn-text { position:relative; display:flex; align-items:center; gap:9px; font-size:15px; white-space:nowrap; }
+.deck-btn small { position:relative; font-size:11px; letter-spacing:.6px; opacity:.85; font-variant-numeric:tabular-nums; }
+.deck-btn:hover:not(:disabled) { filter:brightness(1.08); }
+.deck-btn:active:not(:disabled) { transform:translateY(3px); box-shadow:0 1px 0 color-mix(in oklch, var(--background) 60%, transparent) !important; }
+.deck-btn:disabled { cursor:not-allowed; filter:saturate(.4) brightness(.75); }
+.btn-cast, .btn-cashout { color:var(--primary-foreground); background:linear-gradient(180deg, color-mix(in oklch, var(--primary) 80%, var(--foreground)) 0%, var(--primary) 45%, color-mix(in oklch, var(--primary) 70%, var(--background)) 100%); box-shadow:0 5px 0 color-mix(in oklch, var(--primary) 45%, var(--background)), 0 10px 30px -8px color-mix(in oklch, var(--primary) 60%, transparent); }
+.btn-cashout { background:linear-gradient(180deg, color-mix(in oklch, var(--gold) 75%, var(--foreground)) 0%, var(--gold) 45%, color-mix(in oklch, var(--gold) 65%, var(--background)) 100%); box-shadow:0 5px 0 color-mix(in oklch, var(--gold) 40%, var(--background)), 0 10px 30px -8px color-mix(in oklch, var(--gold) 65%, transparent); }
+.btn-keep { color:var(--foreground); background:linear-gradient(180deg, color-mix(in oklch, var(--water, var(--primary)) 45%, var(--card)), color-mix(in oklch, var(--water, var(--primary)) 20%, var(--background))); border:1px solid color-mix(in oklch, var(--water, var(--primary)) 50%, transparent); box-shadow:0 5px 0 color-mix(in oklch, var(--background) 80%, transparent); }
+.btn-glow { position:absolute; inset:0; background:linear-gradient(110deg, transparent 30%, color-mix(in oklch, var(--foreground) 35%, transparent) 50%, transparent 70%); transform:translateX(-120%); animation:btn-sheen 3.2s ease-in-out infinite; }
+.deck-btn:disabled .btn-glow { display:none; }
+@keyframes btn-sheen { 0%,55% { transform:translateX(-120%); } 100% { transform:translateX(120%); } }
+.btn-cast.is-bite { animation:cta-pulse .5s ease-in-out infinite; }
+@keyframes cta-pulse { from { filter:brightness(1); } to { filter:brightness(1.15); box-shadow:0 0 24px color-mix(in oklch,var(--primary) 25%,transparent); } }
+.tackle-deck .decision-row { grid-template-columns:1.2fr 1fr; gap:10px; }
+.deck-info { align-self:center; color:var(--muted-foreground); width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; background:transparent; border:0; border-radius:6px; cursor:pointer; }
+.deck-info svg { width:16px; height:16px; }
+.deck-info:hover { background:var(--accent); color:var(--accent-foreground); }
+.still .deck-rim, .still .btn-glow { animation:none; }
+.deck-action { min-width:330px; }
+@media (max-width:1050px) {
+  .tackle-deck { grid-template-columns:1fr 1fr; }
+  .deck-hud { grid-column:1 / -1; }
+  .hud-meter { flex:1; }
+  .deck-info { display:none; }
+  .deck-action { min-width:0; }
+}
+@media (max-width:640px) {
+  .tackle-deck { display:flex; flex-direction:column; align-items:stretch; gap:14px; padding:18px 14px 16px; }
+  .hud-meter { min-width:0; padding:8px 11px; }
+  .hud-value { font-size:16px; }
+  .deck-btn { height:58px; }
+}
